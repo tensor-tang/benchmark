@@ -18,6 +18,22 @@ void random_vec(const int n, T* a, const T lower = static_cast<T>(-20.f),
   }
 }
 
+// A(M,K) * B(K,N) = C(M,N)
+template <typename T>
+void MatMul(const T* A, const T* B, T* C, const int M, const int N, const int K) {
+  for (int m = 0; m < M; ++m) {
+    const T* pa = A + m * K;
+    T* pc = C + m * N;
+    for (int n = 0; n < N; ++n) {
+      const T* pb = B + n;
+      pc[n] = pa[0] * pb[0];
+      for (int k = 1; k < K; ++k) {
+        pc[n] += pa[k] * pb[k * N];
+      }
+    }
+  }
+}
+
 int main(int argc, char* argv[]) {
   void* A;
   void* B;
@@ -125,7 +141,21 @@ int main(int argc, char* argv[]) {
       printf("id %d has diff: %f \n", i, diff);
     }
   }
-    
+
+  printf("Check with refer\n");
+	const float* adata = (float*)(A);
+	const float* bdata = (float*)(B);
+  MatMul<float>(adata, bdata, c2, m, n, k);
+  for (int i=0; i < m*n; ++i) {
+    auto diff = c1[i] - c2[i];
+    auto absdiff = diff < 0 ? -diff : diff;
+    if (absdiff > 1e-5) {
+      printf("id %d has diff: %f \n", i, diff);
+    }
+  }
+
+
+ 
   free(A);
   free(B);
   free(C_row);
